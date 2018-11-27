@@ -4,14 +4,26 @@
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
+#include <signal.h>
 
 bool flag[2] = {false, false};
 int turn = 0;
 int value;
+volatile bool shouldRun = true;
+
+void signal_handler (int signal)
+{
+    switch(signal)
+    {
+        case SIGINT:
+            fprintf(stdout,"\nBYE!\n");
+            exit(1);
+    }
+}
 
 void *producer(void *params)
 {
-    while (true)
+    while (shouldRun)
     {
         flag[0] = true;
         turn = 1;
@@ -28,7 +40,7 @@ void *producer(void *params)
 
 void *consumer(void *params)
 {
-    while (true)
+    while (shouldRun)
     {
         flag[1] = true;
         turn = 0;
@@ -45,6 +57,7 @@ void *consumer(void *params)
 int main()
 {
     srand(time(0));
+    signal(SIGINT,signal_handler);
     pthread_t t1, t2;
     pthread_attr_t attr1, attr2;
     pthread_attr_init(&attr1);
